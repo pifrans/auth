@@ -17,6 +17,20 @@ public class UserService {
     }
 
     public List<User> saveAll(List<User> users) {
-        return userRepository.saveAll(users);
+        try {
+            return userRepository.saveAll(users);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public User update(User object) throws NoSuchFieldException {
+        if (userRepository.existsById(object.getId())) {
+            return userRepository.save(object);
+        } else {
+            String message = String.format("Erro ao atualizar usuário de ID (%d), não encontrado!", object.getId());
+            throw new NoSuchFieldException(message);
+        }
     }
 }
