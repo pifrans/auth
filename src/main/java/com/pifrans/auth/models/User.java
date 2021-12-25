@@ -1,5 +1,6 @@
 package com.pifrans.auth.models;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.envers.AuditTable;
@@ -8,9 +9,9 @@ import org.hibernate.envers.NotAudited;
 
 import javax.persistence.*;
 import javax.validation.constraints.Email;
-import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
-import java.util.List;
+import java.util.Date;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -28,17 +29,23 @@ public class User implements Serializable {
     private Long id;
     private String name;
 
-    @NotEmpty(message = "Campo obrigatório!")
     @Email(message = "E-mail inválido!")
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String email;
 
     @Column(nullable = false)
     private String password;
 
+    @Column(name = "last_access", nullable = false)
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
+    private Date lastAccess;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive;
+
     @NotAudited
     @JsonIgnore
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_profile", joinColumns = @JoinColumn(name = "id_user"), inverseJoinColumns = @JoinColumn(name = "id_profile"), catalog = "auth", schema = "auth")
-    private List<Profile> profiles;
+    private Set<Profile> profiles;
 }
