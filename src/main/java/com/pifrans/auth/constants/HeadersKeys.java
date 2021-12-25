@@ -5,18 +5,18 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum ApplicationHeaders {
+public enum HeadersKeys {
     X_AUTHORIZATION(1, "X-Authorization");
 
     private final Integer id;
     private final String description;
 
-    public static ApplicationHeaders toEnum(Integer id) {
+    public static HeadersKeys toEnum(Integer id) {
         if (id == null) {
             return null;
         }
 
-        for (ApplicationHeaders x : ApplicationHeaders.values()) {
+        for (HeadersKeys x : HeadersKeys.values()) {
             if (id.equals(x.getId())) {
                 return x;
             }

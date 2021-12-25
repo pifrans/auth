@@ -36,7 +36,7 @@ public class User implements Serializable {
     @Column(nullable = false)
     private String password;
 
-    @Column(name = "last_access", nullable = false)
+    @Column(name = "last_access")
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private Date lastAccess;
 

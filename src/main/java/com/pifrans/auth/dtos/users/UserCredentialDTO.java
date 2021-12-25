@@ -1,4 +1,4 @@
-package com.pifrans.auth.dtos;
+package com.pifrans.auth.dtos.users;
 
 import lombok.Getter;
 import lombok.Setter;

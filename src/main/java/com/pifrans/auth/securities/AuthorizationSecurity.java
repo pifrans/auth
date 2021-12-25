@@ -1,6 +1,7 @@
 package com.pifrans.auth.securities;
 
-import com.pifrans.auth.constants.ApplicationHeaders;
+import com.pifrans.auth.constants.HeadersKeys;
+import com.pifrans.auth.constants.HeadersValues;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,10 +29,10 @@ public class AuthorizationSecurity extends BasicAuthenticationFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) {
         LOG.info("doFilterInternal()");
-        String header = request.getHeader(ApplicationHeaders.X_AUTHORIZATION.getDescription());
+        String header = request.getHeader(HeadersKeys.X_AUTHORIZATION.getDescription());
 
         try {
-            if (header != null && header.startsWith("Bearer ")) {
+            if (header != null && header.startsWith(HeadersValues.BEARER.getDescription())) {
                 UsernamePasswordAuthenticationToken token = getAuthentication(header.substring(7));
                 if (token != null) {
                     SecurityContextHolder.getContext().setAuthentication(token);
@@ -46,7 +47,7 @@ public class AuthorizationSecurity extends BasicAuthenticationFilter {
 
     private UsernamePasswordAuthenticationToken getAuthentication(String token) {
         LOG.info("UsernamePasswordAuthenticationToken()");
-        if (jwtSecurity.tokenValido(token)) {
+        if (jwtSecurity.tokenValid(token)) {
             String username = jwtSecurity.getUsername(token);
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
             return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());

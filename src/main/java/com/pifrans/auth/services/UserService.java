@@ -4,6 +4,7 @@ import com.pifrans.auth.securities.UserDetailsSecurity;
 import com.pifrans.auth.models.User;
 import com.pifrans.auth.repositories.UserRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -18,6 +19,14 @@ public class UserService implements UserDetailsService {
 
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
+    }
+
+    public static UserDetailsSecurity userLogged() {
+        try {
+            return (UserDetailsSecurity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public User save(User user) {

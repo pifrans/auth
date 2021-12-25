@@ -26,7 +26,7 @@ public class TokenJWTSecurity {
         return Jwts.builder().setSubject(username).setExpiration(new Date(System.currentTimeMillis() + expiration)).signWith(SignatureAlgorithm.HS512, secret.getBytes()).compact();
     }
 
-    public boolean tokenValido(String token) {
+    public boolean tokenValid(String token) {
         LOG.info("tokenValido()");
         Claims claims = getClaims(token);
         if (claims != null) {

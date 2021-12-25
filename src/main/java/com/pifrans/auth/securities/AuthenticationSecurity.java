@@ -2,7 +2,9 @@ package com.pifrans.auth.securities;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pifrans.auth.dtos.UserCredentialDTO;
+import com.pifrans.auth.constants.HeadersKeys;
+import com.pifrans.auth.constants.HeadersValues;
+import com.pifrans.auth.dtos.users.UserCredentialDTO;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -45,7 +47,7 @@ public class AuthenticationSecurity extends UsernamePasswordAuthenticationFilter
         LOG.info("successfulAuthentication()");
         String username = ((UserDetailsSecurity) authResult.getPrincipal()).getUsername();
         String token = jwtSecurity.generateToken(username);
-        response.addHeader("Authorization", "Bearer " + token);
+        response.addHeader(HeadersKeys.X_AUTHORIZATION.getDescription(), HeadersValues.BEARER.getDescription() + token);
     }
 
     @Override
