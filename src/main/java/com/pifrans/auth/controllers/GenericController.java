@@ -54,6 +54,7 @@ public abstract class GenericController<T> {
             T object = service.save(body);
             return ResponseEntity.status(HttpStatus.CREATED).body(object);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }

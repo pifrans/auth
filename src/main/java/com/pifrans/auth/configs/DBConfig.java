@@ -10,9 +10,12 @@ import org.springframework.context.annotation.Profile;
 @Configuration
 @Profile(SystemProfiles.DEV)
 public class DBConfig {
+    private final DBService dbService;
 
     @Autowired
-    private DBService dbService;
+    public DBConfig(DBService dbService) {
+        this.dbService = dbService;
+    }
 
     @Bean
     public boolean instantiateDatabase() {
