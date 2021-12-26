@@ -31,7 +31,6 @@ public class AuthenticationSecurity extends UsernamePasswordAuthenticationFilter
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
-        LOG.info("attemptAuthentication()");
         try {
             UserCredentialDTO credenciaisDTO = new ObjectMapper().readValue(request.getInputStream(), UserCredentialDTO.class);
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(credenciaisDTO.getEmail(), credenciaisDTO.getPassword(), new ArrayList<>());
@@ -44,7 +43,6 @@ public class AuthenticationSecurity extends UsernamePasswordAuthenticationFilter
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) {
-        LOG.info("successfulAuthentication()");
         String username = ((UserDetailsSecurity) authResult.getPrincipal()).getUsername();
         String token = jwtSecurity.generateToken(username);
         response.addHeader(HeadersKeys.X_AUTHORIZATION.getDescription(), HeadersValues.BEARER.getDescription() + token);
@@ -52,7 +50,7 @@ public class AuthenticationSecurity extends UsernamePasswordAuthenticationFilter
 
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException {
-        LOG.severe("Erro de autenticação!");
+        LOG.severe(String.format("Falha na autenticação: %s", failed.getMessage()));
         response.setStatus(401);
         response.setContentType("application/json");
         response.getWriter().append(json());

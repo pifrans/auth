@@ -36,6 +36,10 @@ public class User implements Serializable {
     @Column(nullable = false)
     private String password;
 
+    @Column(name = "current_access")
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
+    private Date currentAccess;
+
     @Column(name = "last_access")
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private Date lastAccess;

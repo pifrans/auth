@@ -28,7 +28,6 @@ public class AuthorizationSecurity extends BasicAuthenticationFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) {
-        LOG.info("doFilterInternal()");
         String header = request.getHeader(HeadersKeys.X_AUTHORIZATION.getDescription());
 
         try {
@@ -46,7 +45,6 @@ public class AuthorizationSecurity extends BasicAuthenticationFilter {
     }
 
     private UsernamePasswordAuthenticationToken getAuthentication(String token) {
-        LOG.info("UsernamePasswordAuthenticationToken()");
         if (jwtSecurity.tokenValid(token)) {
             String username = jwtSecurity.getUsername(token);
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);

@@ -22,12 +22,10 @@ public class TokenJWTSecurity {
     private Long expiration;
 
     public String generateToken(String username) {
-        LOG.info("generateToken()");
         return Jwts.builder().setSubject(username).setExpiration(new Date(System.currentTimeMillis() + expiration)).signWith(SignatureAlgorithm.HS512, secret.getBytes()).compact();
     }
 
     public boolean tokenValid(String token) {
-        LOG.info("tokenValido()");
         Claims claims = getClaims(token);
         if (claims != null) {
             String username = claims.getSubject();
@@ -40,7 +38,6 @@ public class TokenJWTSecurity {
     }
 
     private Claims getClaims(String token) {
-        LOG.info("getClaims()");
         try {
             return Jwts.parser().setSigningKey(secret.getBytes()).parseClaimsJws(token).getBody();
         } catch (Exception e) {
@@ -50,7 +47,6 @@ public class TokenJWTSecurity {
     }
 
     public String getUsername(String token) {
-        LOG.info("getUsername()");
         Claims claims = getClaims(token);
         if (claims != null) {
             return claims.getSubject();

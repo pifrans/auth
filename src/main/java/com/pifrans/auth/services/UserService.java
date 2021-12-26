@@ -43,15 +43,14 @@ public class UserService extends GenericService<User> implements UserDetailsServ
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email);
-
-        if (user == null) {
-            String message = String.format("Usuário com e-mail (%s) não encontrado!", email);
-            throw new UsernameNotFoundException(message);
-        }
-
+        User user = this.findByEmail(email);
         List<SimpleGrantedAuthority> authorities = user.getProfiles().stream().map(x -> new SimpleGrantedAuthority(x.getPermission().name())).collect(Collectors.toList());
         return new UserDetailsSecurity(user.getId(), user.getEmail(), user.getPassword(), authorities);
+    }
+
+    public User findByEmail(String email) {
+        String message = String.format("Usuário com e-mail (%s) não encontrado!", email);
+        return userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException(message));
     }
 
     @Override
@@ -72,9 +71,9 @@ public class UserService extends GenericService<User> implements UserDetailsServ
         return super.saveAll(list);
     }
 
-    @Override
-    public User update(User object, Long id) {
-        object.setPassword(encoder.encode(object.getPassword()));
+    public User updatePassword(String password, Long id) {
+        User object = super.findById(User.class, id);
+        object.setPassword(encoder.encode(password));
         return super.update(object, id);
     }
 
