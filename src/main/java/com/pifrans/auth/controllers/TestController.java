@@ -3,57 +3,38 @@ package com.pifrans.auth.controllers;
 import com.pifrans.auth.dtos.users.UserSimpleDTO;
 import com.pifrans.auth.mappers.GenericMapper;
 import com.pifrans.auth.models.User;
-import com.pifrans.auth.repositories.UserRepository;
 import com.pifrans.auth.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/tests")
-public class TestController {
-    @Autowired
-    private UserRepository userRepository;
+public class TestController extends GenericController<User> {
+    private final UserService userService;
+    private final GenericMapper<User, UserSimpleDTO> genericMapper;
 
     @Autowired
-    private UserService userService;
+    public TestController(UserService userService, GenericMapper<User, UserSimpleDTO> genericMapper) {
+        super(userService, User.class);
+        this.userService = userService;
+        this.genericMapper = genericMapper;
+    }
 
-    @Autowired
-    private GenericMapper<User, UserSimpleDTO> genericMapper;
 
+    @Override
     @GetMapping
     public ResponseEntity<?> findAll() {
         List<UserSimpleDTO> list = new ArrayList<>();
 
-        for (User user : userRepository.findAll()) {
+        for (User user : userService.findAll()) {
             list.add(genericMapper.toDto(user, UserSimpleDTO.class));
         }
         return ResponseEntity.ok().body(list);
-    }
-
-    @PreAuthorize("hasAnyRole('ADMIN')")
-    @PostMapping
-    public ResponseEntity<?> save(@RequestBody User user) {
-        try {
-            User object = userService.save(user);
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body(object);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
-    }
-
-    @PutMapping
-    public ResponseEntity<?> update(@RequestBody User user) {
-        try {
-            User object = userService.update(user);
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body(object);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
     }
 }

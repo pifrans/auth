@@ -3,22 +3,29 @@ package com.pifrans.auth.services;
 import com.pifrans.auth.securities.UserDetailsSecurity;
 import com.pifrans.auth.models.User;
 import com.pifrans.auth.repositories.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class UserService implements UserDetailsService {
+public class UserService extends GenericService<User> implements UserDetailsService {
     private final UserRepository userRepository;
+    private final BCryptPasswordEncoder encoder;
 
-    public UserService(UserRepository userRepository) {
+    @Autowired
+    public UserService(JpaRepository<User, Long> repository, UserRepository userRepository, BCryptPasswordEncoder encoder) {
+        super(repository);
         this.userRepository = userRepository;
+        this.encoder = encoder;
     }
 
     public static UserDetailsSecurity userLogged() {
@@ -26,28 +33,6 @@ public class UserService implements UserDetailsService {
             return (UserDetailsSecurity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         } catch (Exception e) {
             return null;
-        }
-    }
-
-    public User save(User user) {
-        return userRepository.save(user);
-    }
-
-    public List<User> saveAll(List<User> users) {
-        try {
-            return userRepository.saveAll(users);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public User update(User object) throws NoSuchFieldException {
-        if (userRepository.existsById(object.getId())) {
-            return userRepository.save(object);
-        } else {
-            String message = String.format("Erro ao atualizar usuário de ID (%d), não encontrado!", object.getId());
-            throw new NoSuchFieldException(message);
         }
     }
 
@@ -62,5 +47,25 @@ public class UserService implements UserDetailsService {
 
         List<SimpleGrantedAuthority> authorities = user.getProfiles().stream().map(x -> new SimpleGrantedAuthority(x.getPermission())).collect(Collectors.toList());
         return new UserDetailsSecurity(user.getId(), user.getEmail(), user.getPassword(), authorities);
+    }
+
+    @Override // Adicionar perfil
+    public User save(User object) {
+        object.setPassword(encoder.encode(object.getPassword()));
+        return super.save(object);
+    }
+
+    @Override // Testar
+    public List<User> saveAll(List<User> list) {
+        for (User object : list) {
+            object.setPassword(encoder.encode(object.getPassword()));
+        }
+        return super.saveAll(list);
+    }
+
+    @Override
+    public User update(User object, Long id) {
+        object.setPassword(encoder.encode(object.getPassword()));
+        return super.update(object, id);
     }
 }
