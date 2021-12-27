@@ -33,11 +33,11 @@ public class UserService extends GenericService<User> implements UserDetailsServ
         this.encoder = encoder;
     }
 
-    public static UserDetailsSecurity userLogged() {
+    public UserDetailsSecurity userLogged() {
         try {
             return (UserDetailsSecurity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         } catch (Exception e) {
-            return null;
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -74,6 +74,12 @@ public class UserService extends GenericService<User> implements UserDetailsServ
     public User updatePassword(String password, Long id) {
         User object = super.findById(User.class, id);
         object.setPassword(encoder.encode(password));
+        return super.update(object, id);
+    }
+
+    public User updateToken(String token, Long id) {
+        User object = super.findById(User.class, id);
+        object.setToken(token);
         return super.update(object, id);
     }
 

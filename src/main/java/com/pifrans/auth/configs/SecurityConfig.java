@@ -3,6 +3,7 @@ package com.pifrans.auth.configs;
 import com.pifrans.auth.securities.AuthenticationSecurity;
 import com.pifrans.auth.securities.AuthorizationSecurity;
 import com.pifrans.auth.securities.TokenJWTSecurity;
+import com.pifrans.auth.services.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -34,12 +35,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final UserDetailsService userDetailsService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final TokenJWTSecurity tokenJWTSecurity;
+    private final UserService userService;
 
-    public SecurityConfig(Environment environment, UserDetailsService userDetailsService, BCryptPasswordEncoder bCryptPasswordEncoder, TokenJWTSecurity tokenJWTSecurity) {
+    public SecurityConfig(Environment environment, UserDetailsService userDetailsService, BCryptPasswordEncoder bCryptPasswordEncoder, TokenJWTSecurity tokenJWTSecurity, UserService userService) {
         this.environment = environment;
         this.userDetailsService = userDetailsService;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.tokenJWTSecurity = tokenJWTSecurity;
+        this.userService = userService;
     }
 
     @Override
@@ -56,7 +59,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.authorizeRequests().anyRequest().authenticated();
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
-        http.addFilter(new AuthenticationSecurity(authenticationManager(), tokenJWTSecurity));
+        http.addFilter(new AuthenticationSecurity(authenticationManager(), tokenJWTSecurity, userService));
         http.addFilter(new AuthorizationSecurity(authenticationManager(), tokenJWTSecurity, userDetailsService));
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     }

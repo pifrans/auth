@@ -47,6 +47,8 @@ public class User implements Serializable {
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
+    private String token;
+
     @NotAudited
     @JsonIgnore
     @ManyToMany(fetch = FetchType.EAGER)

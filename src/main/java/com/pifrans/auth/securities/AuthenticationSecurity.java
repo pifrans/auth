@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pifrans.auth.constants.HeadersKeys;
 import com.pifrans.auth.constants.HeadersValues;
 import com.pifrans.auth.dtos.users.UserCredentialDTO;
+import com.pifrans.auth.models.User;
+import com.pifrans.auth.services.UserService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,10 +25,13 @@ public class AuthenticationSecurity extends UsernamePasswordAuthenticationFilter
     private static final Logger LOG = Logger.getLogger(AuthenticationSecurity.class.getName());
     private final AuthenticationManager authenticationManager;
     private final TokenJWTSecurity jwtSecurity;
+    private final UserService userService;
 
-    public AuthenticationSecurity(AuthenticationManager authenticationManager, TokenJWTSecurity jwtSecurity) {
+
+    public AuthenticationSecurity(AuthenticationManager authenticationManager, TokenJWTSecurity jwtSecurity, UserService userService) {
         this.authenticationManager = authenticationManager;
         this.jwtSecurity = jwtSecurity;
+        this.userService = userService;
     }
 
     @Override
@@ -35,7 +40,7 @@ public class AuthenticationSecurity extends UsernamePasswordAuthenticationFilter
             UserCredentialDTO credenciaisDTO = new ObjectMapper().readValue(request.getInputStream(), UserCredentialDTO.class);
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(credenciaisDTO.getEmail(), credenciaisDTO.getPassword(), new ArrayList<>());
             return authenticationManager.authenticate(authenticationToken);
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.severe(e.getMessage());
             return null;
         }
@@ -43,9 +48,12 @@ public class AuthenticationSecurity extends UsernamePasswordAuthenticationFilter
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) {
+        Long id = ((UserDetailsSecurity) authResult.getPrincipal()).getId();
         String username = ((UserDetailsSecurity) authResult.getPrincipal()).getUsername();
         String token = jwtSecurity.generateToken(username);
-        response.addHeader(HeadersKeys.X_AUTHORIZATION.getDescription(), HeadersValues.BEARER.getDescription() + token);
+        User user = userService.updateToken(token, id);
+
+        response.addHeader(HeadersKeys.X_AUTHORIZATION.getDescription(), HeadersValues.BEARER.getDescription() + user.getToken());
     }
 
     @Override
