@@ -61,11 +61,11 @@ public final class ErrorResponse {
         return new ResponseEntity<>(result, status);
     }
 
-    public static ResponseEntity<?> handle(String[] messages, HttpServletRequest request, HttpStatus status) {
+    public static ResponseEntity<?> handle(String[] messages, StackTraceElement traceElements, HttpServletRequest request, HttpStatus status) {
         final List<StandardTreatment> errors = new ArrayList<>();
 
         for (final String message : messages) {
-            errors.add(new StandardTreatment(Thread.currentThread().getStackTrace()[2].toString(), KEY_GLOBAL, message, request.getMethod(), request.getRequestURI()));
+            errors.add(new StandardTreatment(traceElements.toString(), KEY_GLOBAL, message, request.getMethod(), request.getRequestURI()));
         }
 
         HashMap<String, List<StandardTreatment>> result = new HashMap<>();
