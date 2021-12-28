@@ -1,5 +1,6 @@
 package com.pifrans.auth.services;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -20,15 +21,15 @@ public abstract class GenericService<T> {
         return repository.findById(id).orElseThrow(() -> new NoSuchElementException(message));
     }
 
-    public T save(T object) {
+    public T save(T object) throws DataIntegrityViolationException {
         return repository.save(object);
     }
 
-    public List<T> saveAll(List<T> list) {
+    public List<T> saveAll(List<T> list) throws DataIntegrityViolationException {
         return repository.saveAll(list);
     }
 
-    public T update(T object, Long id) {
+    public T update(T object, Long id) throws DataIntegrityViolationException {
         if (repository.existsById(id)) {
             return repository.save(object);
         }

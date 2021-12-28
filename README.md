@@ -3,3 +3,6 @@
 - &cross; Criar endpoints para UserController
 - &cross; Criar endpoints para ProfileController
 - &cross; Utilizar o token salvo no banco para forçar expiração, ou encontrar outra forma de expirar o token
+- &cross; Inativação de usuário
+- &cross; Vincular e desvincular perfis ao usuário
+- &cross; Criar logs e arquivos de logs
