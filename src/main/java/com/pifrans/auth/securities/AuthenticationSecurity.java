@@ -40,7 +40,7 @@ public class AuthenticationSecurity extends UsernamePasswordAuthenticationFilter
             UserCredentialDTO credenciaisDTO = new ObjectMapper().readValue(request.getInputStream(), UserCredentialDTO.class);
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(credenciaisDTO.getEmail(), credenciaisDTO.getPassword(), new ArrayList<>());
             return authenticationManager.authenticate(authenticationToken);
-        } catch (Exception e) {
+        } catch (IOException e) {
             LOG.severe(e.getMessage());
             return null;
         }
