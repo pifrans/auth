@@ -3,6 +3,7 @@ package com.pifrans.auth.controllers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.pifrans.auth.dtos.users.UserSimpleDTO;
 import com.pifrans.auth.dtos.users.UserUpdatePasswordDTO;
+import com.pifrans.auth.dtos.users.UserUpdateProfilesdDTO;
 import com.pifrans.auth.dtos.users.UserUpdateSimpleDataDTO;
 import com.pifrans.auth.mappers.GenericMapper;
 import com.pifrans.auth.models.User;
@@ -76,6 +77,13 @@ public class UserController extends GenericController<User> {
     @PutMapping("/updateSimpleData")
     public ResponseEntity<?> updateSimpleData(@Valid @RequestBody UserUpdateSimpleDataDTO body) throws JsonProcessingException {
         User object = userService.updateSimpleData(body);
+        return SuccessResponse.handle(object, HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PutMapping("/updateProfiles")
+    public ResponseEntity<?> updateProfiles(@Valid @RequestBody UserUpdateProfilesdDTO body) {
+        User object = userService.updateProfiles(body);
         return SuccessResponse.handle(object, HttpStatus.OK);
     }
 

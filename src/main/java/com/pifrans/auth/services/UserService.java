@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pifrans.auth.constants.UserProfiles;
 import com.pifrans.auth.dtos.users.UserUpdatePasswordDTO;
+import com.pifrans.auth.dtos.users.UserUpdateProfilesdDTO;
 import com.pifrans.auth.dtos.users.UserUpdateSimpleDataDTO;
 import com.pifrans.auth.exceptions.errors.PermissionException;
 import com.pifrans.auth.models.Profile;
@@ -100,6 +101,16 @@ public class UserService extends GenericService<User> implements UserDetailsServ
             return super.update(objectNew, objectNew.getId());
         }
         String message = String.format("O usuário logado não tem permissão para alterar dados do usuário de ID (%d)!", userUpdateSimpleDataDTO.getId());
+        throw new PermissionException(message);
+    }
+
+    public User updateProfiles(UserUpdateProfilesdDTO userUpdateProfilesdDTO) {
+        if (this.checkPermissionAndAccess(userUpdateProfilesdDTO.getId())) {
+            User object = super.findById(User.class, userUpdateProfilesdDTO.getId());
+            object.setProfiles(userUpdateProfilesdDTO.getProfiles());
+            return super.update(object, object.getId());
+        }
+        String message = String.format("O usuário logado não tem permissão para alterar perfis do usuário de ID (%d)!", userUpdateProfilesdDTO.getId());
         throw new PermissionException(message);
     }
 
