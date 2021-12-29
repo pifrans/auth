@@ -9,6 +9,7 @@ import org.hibernate.envers.NotAudited;
 
 import javax.persistence.*;
 import javax.validation.constraints.Email;
+import javax.validation.constraints.Pattern;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Set;
@@ -34,6 +35,7 @@ public class User implements Serializable {
     private String email;
 
     @Column(nullable = false)
+    @Pattern(regexp = "(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%&*()--+={}\\[\\]|\\\\:;\"'<>,.?/_]).{8,255}", message = "Senha inválida, a senha deve ter de 8 a 255 caracteres com letras maiúsculas, minusculas, números e caracteres especiais!")
     private String password;
 
     @Column(name = "current_access")

@@ -4,9 +4,9 @@ import com.pifrans.auth.constants.ReflectMethods;
 import com.pifrans.auth.responses.SuccessResponse;
 import com.pifrans.auth.services.GenericService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -38,21 +38,24 @@ public abstract class GenericController<T> {
         return SuccessResponse.handle(list, HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @GetMapping("/page")
+    public ResponseEntity<Page<T>> findByPage(@RequestParam(defaultValue = "0") Integer page, @RequestParam(defaultValue = "24") Integer linesPerPage, @RequestParam(defaultValue = "id") String orderBy, @RequestParam(defaultValue = "ASC") String direction) {
+        Page<T> list = service.findByPage(page, linesPerPage, orderBy, direction);
+        return ResponseEntity.ok().body(list);
+    }
+
     @PostMapping
     public ResponseEntity<?> save(@Valid @RequestBody T body) {
         T object = service.save(body);
         return SuccessResponse.handle(object, HttpStatus.CREATED);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
     @PostMapping("/saveAll")
     public ResponseEntity<?> saveAll(@RequestBody List<T> body) {
         List<T> list = service.saveAll(body);
         return SuccessResponse.handle(list, HttpStatus.CREATED);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
     @PutMapping
     public ResponseEntity<?> update(@Valid @RequestBody T body) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Method method = body.getClass().getMethod(ReflectMethods.GET_ID.getDescription());

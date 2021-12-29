@@ -1,7 +1,10 @@
 package com.pifrans.auth.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pifrans.auth.constants.UserProfiles;
 import com.pifrans.auth.dtos.users.UserUpdatePasswordDTO;
+import com.pifrans.auth.dtos.users.UserUpdateSimpleDataDTO;
 import com.pifrans.auth.exceptions.errors.PermissionException;
 import com.pifrans.auth.models.Profile;
 import com.pifrans.auth.models.User;
@@ -28,13 +31,15 @@ public class UserService extends GenericService<User> implements UserDetailsServ
     private final UserRepository userRepository;
     private final ProfileService profileService;
     private final BCryptPasswordEncoder encoder;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    public UserService(JpaRepository<User, Long> repository, UserRepository userRepository, ProfileService profileService, BCryptPasswordEncoder encoder) {
+    public UserService(JpaRepository<User, Long> repository, UserRepository userRepository, ProfileService profileService, BCryptPasswordEncoder encoder, ObjectMapper objectMapper) {
         super(repository);
         this.userRepository = userRepository;
         this.profileService = profileService;
         this.encoder = encoder;
+        this.objectMapper = objectMapper;
     }
 
     public UserDetailsSecurity userLogged() {
@@ -54,11 +59,9 @@ public class UserService extends GenericService<User> implements UserDetailsServ
 
     @Override
     public User findById(Class<User> userClass, Long id) {
-        Set<String> profiles = this.userLogged().getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
-        if (profiles.contains(UserProfiles.ROLE_ADMIN.name()) || this.userLogged().getId().equals(id)) {
+        if (this.checkPermissionAndAccess(id)) {
             return super.findById(userClass, id);
         }
-
         String message = String.format("O usuário logado não tem permissão para acessar o usuário de ID (%d)!", id);
         throw new PermissionException(message);
     }
@@ -87,16 +90,38 @@ public class UserService extends GenericService<User> implements UserDetailsServ
         return super.saveAll(list);
     }
 
+    public User updateSimpleData(UserUpdateSimpleDataDTO userUpdateSimpleDataDTO) throws DataIntegrityViolationException, JsonProcessingException {
+        if (this.checkPermissionAndAccess(userUpdateSimpleDataDTO.getId())) {
+            String objectJson = objectMapper.writer().withDefaultPrettyPrinter().writeValueAsString(userUpdateSimpleDataDTO);
+            User objectOld = super.findById(User.class, userUpdateSimpleDataDTO.getId());
+            User objectNew = objectMapper.readerForUpdating(objectOld).readValue(objectJson);
+
+            objectNew.setPassword(encoder.encode(objectNew.getPassword()));
+            return super.update(objectNew, objectNew.getId());
+        }
+        String message = String.format("O usuário logado não tem permissão para alterar dados do usuário de ID (%d)!", userUpdateSimpleDataDTO.getId());
+        throw new PermissionException(message);
+    }
+
     public User updatePassword(UserUpdatePasswordDTO userUpdatePasswordDTO) {
-        User object = super.findById(User.class, userUpdatePasswordDTO.getId());
-        object.setPassword(encoder.encode(userUpdatePasswordDTO.getPassword()));
-        return super.update(object, object.getId());
+        if (this.checkPermissionAndAccess(userUpdatePasswordDTO.getId())) {
+            User object = super.findById(User.class, userUpdatePasswordDTO.getId());
+            object.setPassword(encoder.encode(userUpdatePasswordDTO.getPassword()));
+            return super.update(object, object.getId());
+        }
+        String message = String.format("O usuário logado não tem permissão para alterar a senha do usuário de ID (%d)!", userUpdatePasswordDTO.getId());
+        throw new PermissionException(message);
     }
 
     public User updateToken(String token, Long id) {
         User object = super.findById(User.class, id);
         object.setToken(token);
         return super.update(object, id);
+    }
+
+    private Boolean checkPermissionAndAccess(Long id) {
+        Set<String> profiles = this.userLogged().getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
+        return profiles.contains(UserProfiles.ROLE_ADMIN.name()) || this.userLogged().getId().equals(id);
     }
 
     private Set<Profile> addProfileUser(User object) {

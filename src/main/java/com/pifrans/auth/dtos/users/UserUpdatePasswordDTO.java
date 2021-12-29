@@ -13,6 +13,6 @@ public class UserUpdatePasswordDTO {
     private Long id;
 
     @NotNull
-    @Pattern(regexp = "(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%&*()--+={}\\[\\]|\\\\:;\"'<>,.?/_]).{8,20}", message = "Senha inválida, a senha deve ter de 8 a 20 caracteres com letras maiúsculas, minusculas, números e caracteres especiais!")
+    @Pattern(regexp = "(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%&*()--+={}\\[\\]|\\\\:;\"'<>,.?/_]).{8,255}", message = "Senha inválida, a senha deve ter de 8 a 255 caracteres com letras maiúsculas, minusculas, números e caracteres especiais!")
     private String password;
 }

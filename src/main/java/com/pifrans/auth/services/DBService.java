@@ -9,9 +9,11 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 @Service
 public class DBService {
+    private static final Logger LOG = Logger.getLogger(DBService.class.getName());
     private final UserService userService;
     private final ProfileService profileService;
 
@@ -25,14 +27,14 @@ public class DBService {
         Profile p1 = Profile.builder().permission(UserProfiles.ROLE_ADMIN).build();
         Profile p2 = Profile.builder().permission(UserProfiles.ROLE_USER).build();
 
-        User u1 = User.builder().name("admin").email("admin@gmail.com").password("admin").isActive(true).profiles(Set.copyOf(List.of(p1, p2))).build();
-        User u2 = User.builder().name("user").email("user@gmail.com").password("user").isActive(true).build();
+        User u1 = User.builder().name("admin").email("admin@gmail.com").password("@Lu182905").isActive(true).profiles(Set.copyOf(List.of(p1, p2))).build();
+        User u2 = User.builder().name("user").email("user@gmail.com").password("@Lu182905").isActive(true).build();
 
         try {
             profileService.saveAll(List.of(p1, p2));
             userService.saveAll(Arrays.asList(u1, u2));
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.severe(e.getCause().getCause().getMessage());
         }
     }
 }
