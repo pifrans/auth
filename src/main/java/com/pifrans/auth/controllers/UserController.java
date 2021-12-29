@@ -81,6 +81,13 @@ public class UserController extends GenericController<User> {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN')")
+    @PutMapping("/updateActive/{id}/{isActive}")
+    public ResponseEntity<?> updateActive(@PathVariable Long id, @PathVariable Boolean isActive) {
+        User object = userService.updateActive(id, isActive);
+        return SuccessResponse.handle(object, HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @PutMapping("/updateProfiles")
     public ResponseEntity<?> updateProfiles(@Valid @RequestBody UserUpdateProfilesdDTO body) {
         User object = userService.updateProfiles(body);

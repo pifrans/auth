@@ -55,7 +55,7 @@ public class UserService extends GenericService<User> implements UserDetailsServ
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = this.findByEmail(email);
         List<SimpleGrantedAuthority> authorities = user.getProfiles().stream().map(x -> new SimpleGrantedAuthority(x.getPermission().name())).collect(Collectors.toList());
-        return new UserDetailsSecurity(user.getId(), user.getEmail(), user.getPassword(), authorities);
+        return new UserDetailsSecurity(user.getId(), user.getEmail(), user.getPassword(), user.isActive(), authorities);
     }
 
     @Override
@@ -101,6 +101,16 @@ public class UserService extends GenericService<User> implements UserDetailsServ
             return super.update(objectNew, objectNew.getId());
         }
         String message = String.format("O usuário logado não tem permissão para alterar dados do usuário de ID (%d)!", userUpdateSimpleDataDTO.getId());
+        throw new PermissionException(message);
+    }
+
+    public User updateActive(Long id, Boolean isActive) {
+        if (this.checkPermissionAndAccess(id)) {
+            User object = super.findById(User.class, id);
+            object.setActive(isActive);
+            return super.update(object, object.getId());
+        }
+        String message = String.format("O usuário logado não tem permissão para ativar ou inativar o usuário de ID (%d)!", id);
         throw new PermissionException(message);
     }
 

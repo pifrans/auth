@@ -17,6 +17,7 @@ public class UserDetailsSecurity implements UserDetails {
     private Long id;
     private String email;
     private String password;
+    private Boolean enabled;
     private Collection<? extends GrantedAuthority> authorities;
 
     @Override
@@ -51,7 +52,7 @@ public class UserDetailsSecurity implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.enabled;
     }
 
     public boolean hasRole(Profile profile) {
