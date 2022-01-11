@@ -7,7 +7,6 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 
-import java.util.Date;
 import java.util.logging.Logger;
 
 @Configuration
@@ -20,15 +19,14 @@ public class LoginListener implements ApplicationListener<AuthenticationSuccessE
         this.userService = userService;
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public void onApplicationEvent(AuthenticationSuccessEvent event) {
         try {
             User user = userService.findByEmail(event.getAuthentication().getName());
-            user.setLastAccess(user.getCurrentAccess());
-            user.setCurrentAccess(new Date(System.currentTimeMillis()));
-            userService.update(user, user.getId());
+            user = userService.updateAccessDates(user);
 
-            LOG.info(String.format("Usuário (%s) logado com sucesso!", event.getAuthentication().getName()));
+            LOG.info(String.format("Usuário (%s) logado com sucesso!", user.getEmail()));
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }

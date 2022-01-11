@@ -13,17 +13,20 @@ import com.pifrans.auth.repositories.UserRepository;
 import com.pifrans.auth.securities.UserDetailsSecurity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,15 +34,13 @@ import java.util.stream.Collectors;
 public class UserService extends GenericService<User> implements UserDetailsService {
     private final UserRepository userRepository;
     private final ProfileService profileService;
-    private final BCryptPasswordEncoder encoder;
     private final ObjectMapper objectMapper;
 
     @Autowired
-    public UserService(JpaRepository<User, Long> repository, UserRepository userRepository, ProfileService profileService, BCryptPasswordEncoder encoder, ObjectMapper objectMapper) {
+    public UserService(JpaRepository<User, Long> repository, UserRepository userRepository, ProfileService profileService, ObjectMapper objectMapper) {
         super(repository);
         this.userRepository = userRepository;
         this.profileService = profileService;
-        this.encoder = encoder;
         this.objectMapper = objectMapper;
     }
 
@@ -54,7 +55,7 @@ public class UserService extends GenericService<User> implements UserDetailsServ
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = this.findByEmail(email);
-        List<SimpleGrantedAuthority> authorities = user.getProfiles().stream().map(x -> new SimpleGrantedAuthority(x.getPermission().name())).collect(Collectors.toList());
+        List<SimpleGrantedAuthority> authorities = user.getProfiles().stream().map(x -> new SimpleGrantedAuthority(x.getPermission())).collect(Collectors.toList());
         return new UserDetailsSecurity(user.getId(), user.getEmail(), user.getPassword(), user.isActive(), authorities);
     }
 
@@ -72,12 +73,31 @@ public class UserService extends GenericService<User> implements UserDetailsServ
         return userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException(message));
     }
 
+    @PreAuthorize("hasAnyRole(@userGroups.groupAdmin())")
+    @Override
+    public List<User> findAll() {
+        return super.findAll();
+    }
+
+    @PreAuthorize("hasAnyRole(@userGroups.groupAdmin())")
+    @Override
+    public Page<User> findByPage(Integer page, Integer linesPerPage, String orderBy, String direction) {
+        return super.findByPage(page, linesPerPage, orderBy, direction);
+    }
+
+    @PreAuthorize("hasAnyRole(@userGroups.groupAdmin())")
     @Override
     public User save(User object) throws DataIntegrityViolationException {
-        User user = User.builder().name(object.getName()).email(object.getEmail()).password(encoder.encode(object.getPassword())).isActive(true).profiles(this.addProfileUser(object)).build();
+        User user = new User();
+        user.setName(object.getName());
+        user.setEmail(object.getEmail());
+        user.setPassword(object.getPassword());
+        user.setActive(true);
+        user.setProfiles(this.addProfileUser(object));
         return super.save(user);
     }
 
+    @PreAuthorize("hasAnyRole(@userGroups.groupAdmin())")
     @Override
     public List<User> saveAll(List<User> list) throws DataIntegrityViolationException {
         for (User object : list) {
@@ -86,9 +106,23 @@ public class UserService extends GenericService<User> implements UserDetailsServ
             object.setLastAccess(null);
             object.setActive(true);
             object.setToken(null);
-            object.setPassword(encoder.encode(object.getPassword()));
+            object.setPassword(object.getPassword());
         }
         return super.saveAll(list);
+    }
+
+    @PreAuthorize("hasAnyRole(@userGroups.groupAdmin())")
+    @Override
+    public User update(User object, Long id) throws DataIntegrityViolationException {
+        return super.update(object, id);
+    }
+
+    public User updateAccessDates(User object) throws DataIntegrityViolationException {
+        String message = String.format("Não foi possível atualizar datas de acesso em (%s) de ID (%d), não encontrado!", User.class.getSimpleName(), object.getId());
+        object = userRepository.findById(object.getId()).orElseThrow(() -> new NoSuchElementException(message));
+        object.setLastAccess(object.getCurrentAccess());
+        object.setCurrentAccess(new Date(System.currentTimeMillis()));
+        return userRepository.save(object);
     }
 
     public User updateSimpleData(UserUpdateSimpleDataDTO userUpdateSimpleDataDTO) throws DataIntegrityViolationException, JsonProcessingException {
@@ -96,14 +130,13 @@ public class UserService extends GenericService<User> implements UserDetailsServ
             String objectJson = objectMapper.writer().withDefaultPrettyPrinter().writeValueAsString(userUpdateSimpleDataDTO);
             User objectOld = super.findById(User.class, userUpdateSimpleDataDTO.getId());
             User objectNew = objectMapper.readerForUpdating(objectOld).readValue(objectJson);
-
-            objectNew.setPassword(encoder.encode(objectNew.getPassword()));
             return super.update(objectNew, objectNew.getId());
         }
         String message = String.format("O usuário logado não tem permissão para alterar dados do usuário de ID (%d)!", userUpdateSimpleDataDTO.getId());
         throw new PermissionException(message);
     }
 
+    @PreAuthorize("hasAnyRole(@userGroups.groupAdmin())")
     public User updateActive(Long id, Boolean isActive) {
         if (this.checkPermissionAndAccess(id)) {
             User object = super.findById(User.class, id);
@@ -114,6 +147,7 @@ public class UserService extends GenericService<User> implements UserDetailsServ
         throw new PermissionException(message);
     }
 
+    @PreAuthorize("hasAnyRole(@userGroups.groupAdmin())")
     public User updateProfiles(UserUpdateProfilesdDTO userUpdateProfilesdDTO) {
         if (this.checkPermissionAndAccess(userUpdateProfilesdDTO.getId())) {
             User object = super.findById(User.class, userUpdateProfilesdDTO.getId());
@@ -127,7 +161,7 @@ public class UserService extends GenericService<User> implements UserDetailsServ
     public User updatePassword(UserUpdatePasswordDTO userUpdatePasswordDTO) {
         if (this.checkPermissionAndAccess(userUpdatePasswordDTO.getId())) {
             User object = super.findById(User.class, userUpdatePasswordDTO.getId());
-            object.setPassword(encoder.encode(userUpdatePasswordDTO.getPassword()));
+            object.setPassword(userUpdatePasswordDTO.getPassword());
             return super.update(object, object.getId());
         }
         String message = String.format("O usuário logado não tem permissão para alterar a senha do usuário de ID (%d)!", userUpdatePasswordDTO.getId());
@@ -138,6 +172,12 @@ public class UserService extends GenericService<User> implements UserDetailsServ
         User object = super.findById(User.class, id);
         object.setToken(token);
         return super.update(object, id);
+    }
+
+    @PreAuthorize("hasAnyRole(@userGroups.groupAdmin())")
+    @Override
+    public User deleteById(Class<User> userClass, Long id) {
+        return super.deleteById(userClass, id);
     }
 
     private Boolean checkPermissionAndAccess(Long id) {

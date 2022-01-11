@@ -1,6 +1,5 @@
 package com.pifrans.auth.models;
 
-import com.pifrans.auth.constants.UserProfiles;
 import lombok.*;
 import org.hibernate.envers.AuditTable;
 import org.hibernate.envers.Audited;
@@ -23,7 +22,6 @@ public class Profile implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
     @Column(unique = true, nullable = false)
-    private UserProfiles permission;
+    private String permission;
 }

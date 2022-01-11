@@ -1,6 +1,7 @@
-package com.pifrans.auth.exceptions.treatments;
+package com.pifrans.auth.handlers;
 
 import com.pifrans.auth.exceptions.errors.PermissionException;
+import com.pifrans.auth.exceptions.errors.PropertyValueException;
 import com.pifrans.auth.responses.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -21,14 +23,15 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 
 @ControllerAdvice
-public class HandlerTreatment {
-    private static final Logger LOG = LoggerFactory.getLogger(HandlerTreatment.class);
+public class ErrorsHandler {
+    private static final Logger LOG = LoggerFactory.getLogger(ErrorsHandler.class);
     private final HttpServletRequest request;
 
     @Autowired
-    public HandlerTreatment(HttpServletRequest request) {
+    public ErrorsHandler(HttpServletRequest request) {
         this.request = request;
     }
+
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handler(MethodArgumentNotValidException exception) {
@@ -42,16 +45,28 @@ public class HandlerTreatment {
         return ErrorResponse.handle(new String[]{errors.toString()}, exception.getStackTrace()[36], request, HttpStatus.NOT_ACCEPTABLE);
     }
 
+    @ExceptionHandler(PropertyValueException.class)
+    public ResponseEntity<?> handler(PropertyValueException exception) {
+        LOG.error(exception.getStackTrace()[0].toString() + " --> " + exception.getMessage());
+        return ErrorResponse.handle(new String[]{exception.getMessage()}, exception.getStackTrace()[0], request, HttpStatus.NOT_ACCEPTABLE);
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<?> handler(MethodArgumentTypeMismatchException exception) {
         LOG.error(exception.getStackTrace()[36].toString() + " --> " + exception.getCause().getMessage());
-        return ErrorResponse.handle(new String[]{exception.getCause().getMessage()}, exception.getStackTrace()[36], request, HttpStatus.NOT_ACCEPTABLE);
+        return ErrorResponse.handle(new String[]{exception.getCause().getMessage()}, exception.getStackTrace()[36], request, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(PermissionException.class)
     public ResponseEntity<?> handler(PermissionException exception) {
         LOG.error(exception.getStackTrace()[0].toString() + " --> " + exception.getMessage());
         return ErrorResponse.handle(new String[]{exception.getMessage()}, exception.getStackTrace()[0], request, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<?> handler(AccessDeniedException exception) {
+        LOG.error(exception.getStackTrace()[8].toString() + " --> " + exception.getMessage());
+        return ErrorResponse.handle(new String[]{exception.getMessage()}, exception.getStackTrace()[8], request, HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(NoSuchElementException.class)

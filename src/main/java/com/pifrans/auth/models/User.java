@@ -2,21 +2,25 @@ package com.pifrans.auth.models;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.*;
+import com.pifrans.auth.exceptions.errors.PropertyValueException;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.envers.AuditTable;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import javax.persistence.*;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.Pattern;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Getter
 @Setter
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Audited
@@ -30,12 +34,10 @@ public class User implements Serializable {
     private Long id;
     private String name;
 
-    @Email(message = "E-mail inválido!")
     @Column(unique = true, nullable = false)
     private String email;
 
     @Column(nullable = false)
-    @Pattern(regexp = "(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%&*()--+={}\\[\\]|\\\\:;\"'<>,.?/_]).{8,255}", message = "Senha inválida, a senha deve ter de 8 a 255 caracteres com letras maiúsculas, minusculas, números e caracteres especiais!")
     private String password;
 
     @Column(name = "current_access")
@@ -56,4 +58,26 @@ public class User implements Serializable {
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_profile", joinColumns = @JoinColumn(name = "id_user"), inverseJoinColumns = @JoinColumn(name = "id_profile"), catalog = "auth", schema = "auth")
     private Set<Profile> profiles;
+
+    public void setEmail(String email) {
+        Pattern pattern = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(email);
+
+        if (matcher.find()) {
+            this.email = email;
+        } else {
+            String message = String.format("E-mail inválido (%s)!", email);
+            throw new PropertyValueException(message);
+        }
+    }
+
+    public void setPassword(String password) {
+        String regex = "(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%&*()--+={}\\[\\]|\\\\:;\"'<>,.?/_]).{8,255}";
+        if (password.matches(regex)) {
+            this.password = new BCryptPasswordEncoder().encode(password);
+        } else {
+            String message = String.format("Senha inválida (%s), a senha deve ter de 8 a 255 caracteres com letras maiúsculas, minusculas, números e caracteres especiais!", password);
+            throw new PropertyValueException(message);
+        }
+    }
 }

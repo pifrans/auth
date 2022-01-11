@@ -10,8 +10,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.logging.Logger;
 
 
@@ -27,21 +29,16 @@ public class AuthorizationSecurity extends BasicAuthenticationFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         String header = request.getHeader(HeadersKeys.X_AUTHORIZATION.getDescription());
 
-        try {
-            if (header != null && header.startsWith(HeadersValues.BEARER.getDescription())) {
-                UsernamePasswordAuthenticationToken token = getAuthentication(header.substring(7));
-                if (token != null) {
-                    SecurityContextHolder.getContext().setAuthentication(token);
-                }
+        if (header != null && header.startsWith(HeadersValues.BEARER.getDescription())) {
+            UsernamePasswordAuthenticationToken token = getAuthentication(header.substring(7));
+            if (token != null) {
+                SecurityContextHolder.getContext().setAuthentication(token);
             }
-            chain.doFilter(request, response);
-        } catch (Exception e) {
-            LOG.severe(e.getMessage());
-            throw new RuntimeException(e.getMessage());
         }
+        chain.doFilter(request, response);
     }
 
     private UsernamePasswordAuthenticationToken getAuthentication(String token) {

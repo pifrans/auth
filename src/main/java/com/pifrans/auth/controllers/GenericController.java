@@ -51,7 +51,7 @@ public abstract class GenericController<T> {
     }
 
     @PostMapping("/saveAll")
-    public ResponseEntity<?> saveAll(@RequestBody List<T> body) {
+    public ResponseEntity<?> saveAll(@Valid @RequestBody List<T> body) {
         List<T> list = service.saveAll(body);
         return SuccessResponse.handle(list, HttpStatus.CREATED);
     }
